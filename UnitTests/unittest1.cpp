@@ -18,7 +18,7 @@ namespace UnitTests
 
 			status = GetDisplayCount(&MonitorCount);
 
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			Assert::AreEqual(MonitorCount, (UINT)2);
 		}
@@ -30,13 +30,13 @@ namespace UnitTests
 			memset(PrimaryMonitorName, 0, 32 * sizeof(TCHAR));
 
 			status = GetPrimaryDisplayName((LPTSTR)PrimaryMonitorName);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			TCHAR buffer[100];
 			_stprintf_s(buffer, 100, _T("Primary Monitor is: %s\r\n"), PrimaryMonitorName);
-			OutputDebugString(buffer);
+			Logger::WriteMessage(buffer);
 
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 		}
 
 		TEST_METHOD(TestGetAndReleaseDisplayNameArray)
@@ -46,17 +46,17 @@ namespace UnitTests
 			UINT DisplayCount;
 			
 			status = GetDisplayNameArray(&DisplayNames, &DisplayCount);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			TCHAR buffer[100];
 			for (UINT index = 0; index < DisplayCount; index++)
 			{
 				_stprintf_s(buffer, 100, _T("Display %d is: %s\r\n"), index, DisplayNames[index]);
-				OutputDebugString(buffer);
+				Logger::WriteMessage(buffer);
 			}
 
 			status = ReleaseDisplayNameArray(DisplayNames, DisplayCount);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 		}
 
 		TEST_METHOD(TestGetDisplayPosition_PrimaryMonitor)
@@ -68,13 +68,13 @@ namespace UnitTests
 			memset(PrimaryMonitorName, 0, sizeof(TCHAR) * 32);
 
 			status = GetPrimaryDisplayName(PrimaryMonitorName);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			LONG xPos = -1;
 			LONG yPos = -1;
 
 			status = GetDisplayPosition(PrimaryMonitorName, &xPos, &yPos);
-			Assert::IsTrue(status == TRUE, _T("Get Primary Display Positon Failed"));
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			Assert::IsTrue(xPos == 0, _T("Primary Display X coordinate <> 0"));
 			Assert::IsTrue(yPos == 0, _T("Primary Display Y coordinate <> 0"));
@@ -87,18 +87,18 @@ namespace UnitTests
 			UINT DisplayCount;
 
 			status = GetDisplayCount(&DisplayCount);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			if (DisplayCount > 1)
 			{
 				TCHAR PrimaryDisplayName[32];
 				status = GetPrimaryDisplayName(PrimaryDisplayName);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				// find the name of a display that is NOT the primary
 				LPTSTR* DisplayNameArray;
 				status = GetDisplayNameArray(&DisplayNameArray, &DisplayCount);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				for (UINT index = 0; index < DisplayCount; index++)
 				{
@@ -108,40 +108,39 @@ namespace UnitTests
 					if (_tcscmp(DisplayNameArray[index], PrimaryDisplayName) != 0)
 					{
 						status = GetDisplayPosition(DisplayNameArray[index], &xPos, &yPos);
-						Assert::IsTrue(status == TRUE);
+						Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 						Assert::IsTrue((xPos != 0) || (yPos != 0), _T("Non-Primary Monitor cannot have 0,0 Coordinate"));
 					}
 				}
 
 				status = ReleaseDisplayNameArray(DisplayNameArray, DisplayCount);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 			}
 		}
 
 		BEGIN_TEST_METHOD_ATTRIBUTE(TestSetPrimaryDisplay)
 			TEST_IGNORE()
-		END_TEST_METHOD_ATTRIBUTE()
-
+			END_TEST_METHOD_ATTRIBUTE()
 		TEST_METHOD(TestSetPrimaryDisplay)
 		{
 			BOOL status;
 			UINT DisplayCount;
 
 			status = GetDisplayCount(&DisplayCount);
-			Assert::IsTrue(status == TRUE);
+			Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 			if (DisplayCount > 1)
 			{
 				TCHAR CurrentPrimaryDisplayName[32];
 				TCHAR NewPrimaryDisplayName[32];
 				status = GetPrimaryDisplayName(CurrentPrimaryDisplayName);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				// find the name of a display that is NOT the primary
 				LPTSTR* DisplayNameArray;
 				status = GetDisplayNameArray(&DisplayNameArray, &DisplayCount);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				for (UINT index = 0; index < DisplayCount; index++)
 				{
@@ -150,7 +149,7 @@ namespace UnitTests
 					{
 						// Swap the primary monitor
 						status = SetPrimaryDisplay(DisplayNameArray[index]);
-						Assert::IsTrue(status == TRUE);
+						Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 						// Copy the new primary name
 						_tcscpy_s(NewPrimaryDisplayName, 32, DisplayNameArray[index]);
@@ -161,16 +160,16 @@ namespace UnitTests
 				// Monitor should now be switched
 				memset(CurrentPrimaryDisplayName, 0, sizeof(TCHAR) * 32);
 				status = GetPrimaryDisplayName(CurrentPrimaryDisplayName);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				Assert::IsTrue(_tcscmp(CurrentPrimaryDisplayName, NewPrimaryDisplayName) == 0);
 
 				status = ReleaseDisplayNameArray(DisplayNameArray, DisplayCount);
-				Assert::IsTrue(status == TRUE);
+				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 			}
 		}
 
-		TEST_METHOD(TestGetDisplayDeviceID)
+		TEST_METHOD(TestGetDisplayDeviceID_Success)
 		{
 			TCHAR PrimaryDisplayName[32];
 			TCHAR PrimaryMonitorID[128];
@@ -181,6 +180,23 @@ namespace UnitTests
 
 			status = GetMonitorDeviceID(PrimaryDisplayName, PrimaryMonitorID);
 			Assert::IsTrue(status == TRUE);
+
+		}
+
+		TEST_METHOD(TestGetDisplayDeviceID_FAIL)
+		{
+			TCHAR PrimaryMonitorID[128];
+			BOOL status = GetMonitorDeviceID(_T("BAD NAME"), PrimaryMonitorID);
+
+			Assert::IsFalse(status == TRUE, _T("Call to GetMonitorDeviceID succeeded - it should have failed."));
+
+			if (!status)
+			{
+				Logger::WriteMessage(_T("Call to GetMonitorDeviceID failed (as expected) with error:"));
+				Logger::WriteMessage(GetLastMsgWrapper());
+				Logger::WriteMessage(_T("\r\n"));
+			}
+			
 
 		}
 
@@ -197,6 +213,22 @@ namespace UnitTests
 			Assert::IsTrue(status == TRUE);
 
 
+		}
+
+		// wraps the "GetLastLibraryErrorMsg to return an LPCTSTR instead of BOOL
+		LPCTSTR GetLastMsgWrapper()
+		{
+			LPCTSTR msg = NULL;
+			BOOL status = GetLastLibraryErrorMsg(&msg);
+			if (!status)
+			{
+				Assert::Fail(_T("Getting Error Message Failed"));
+				return NULL;
+			}
+			else
+			{
+				return msg;
+			}
 		}
 	};
 }
