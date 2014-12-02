@@ -45,7 +45,7 @@ BOOL WINAPI GetDisplayCount(UINT* MonitorCount)
 	return TRUE;
 }
 
-BOOL WINAPI GetPrimaryDisplayName(LPTSTR AdapterName)
+BOOL WINAPI GetPrimaryDisplayName(TCHAR AdapterName[32])
 {
 	// AdapterName should be a TCHAR[32]
 	DISPLAY_DEVICE DispDev;
@@ -137,7 +137,7 @@ BOOL WINAPI SetPrimaryDisplay(LPCTSTR PrimaryDisplayName)
 	return TRUE;
 }
 
-BOOL WINAPI GetDisplayNameArray(LPTSTR** ArrayOfDisplayNames, UINT* DisplaysInArray)
+BOOL WINAPI GetDisplayNameArray(LPCTSTR** ArrayOfDisplayNames, UINT* DisplaysInArray)
 {
 	BOOL status = FALSE;
 	DISPLAY_DEVICE DispDev;
@@ -151,14 +151,15 @@ BOOL WINAPI GetDisplayNameArray(LPTSTR** ArrayOfDisplayNames, UINT* DisplaysInAr
 	}
 
 	// allocate the array itself
-	*ArrayOfDisplayNames = (LPTSTR*)malloc(sizeof(TCHAR*) * (*DisplaysInArray));
+	*ArrayOfDisplayNames = (LPCTSTR*)malloc(sizeof(TCHAR*) * (*DisplaysInArray));
 	if ((*ArrayOfDisplayNames) == NULL)
 	{
 		SetLastLibraryErrorMsg(_T("Failed to allocate memory to hold display names array"));
 		return FALSE;
 	}
 
-	LPTSTR *currentName = *ArrayOfDisplayNames;
+	LPCTSTR *currentName = *ArrayOfDisplayNames;
+	LPTSTR tmpBuffer = NULL;
 
 	for (UINT id = 0; EnumDisplayDevices(NULL, id, &DispDev, NULL); id++)
 	{
@@ -166,14 +167,15 @@ BOOL WINAPI GetDisplayNameArray(LPTSTR** ArrayOfDisplayNames, UINT* DisplaysInAr
 		{
 			UINT DeviceNameLength = _tcslen(DispDev.DeviceName) + 1;
 
-			*currentName = (LPTSTR)malloc(sizeof(TCHAR) * DeviceNameLength);
-			if ((*currentName) == NULL)
+			tmpBuffer = (LPTSTR)malloc(sizeof(TCHAR) * DeviceNameLength);
+			if ((tmpBuffer) == NULL)
 			{
 				SetLastLibraryErrorMsg(_T("Failed to allocate memory for monitor name string"));
 				return FALSE;
 			}
 
-			_tcscpy_s(*currentName, DeviceNameLength, DispDev.DeviceName);
+			_tcscpy_s(tmpBuffer, DeviceNameLength, DispDev.DeviceName);
+			*currentName = tmpBuffer;
 			currentName++;
 		}
 	}
@@ -181,12 +183,12 @@ BOOL WINAPI GetDisplayNameArray(LPTSTR** ArrayOfDisplayNames, UINT* DisplaysInAr
 	return TRUE;
 }
 
-BOOL WINAPI ReleaseDisplayNameArray(LPTSTR* ArrayOfDisplayNames, UINT DisplaysInArray)
+BOOL WINAPI ReleaseDisplayNameArray(LPCTSTR* ArrayOfDisplayNames, UINT DisplaysInArray)
 {
 	for (UINT index = 0; index < DisplaysInArray; index++)
 	{
 		// Free the string
-		free(ArrayOfDisplayNames[index]);
+		free((void*) (ArrayOfDisplayNames[index]));
 	}
 
 	// Free the array itself
@@ -195,7 +197,7 @@ BOOL WINAPI ReleaseDisplayNameArray(LPTSTR* ArrayOfDisplayNames, UINT DisplaysIn
 	return TRUE;
 }
 
-BOOL WINAPI GetMonitorDeviceID(LPCTSTR DisplayName, LPTSTR DeviceID)
+BOOL WINAPI GetMonitorDeviceID(LPCTSTR DisplayName, TCHAR DeviceID[128])
 {
 	// DeviceID should be a TCHAR[128]
 	BOOL status = FALSE;
@@ -240,7 +242,7 @@ BOOL WINAPI GetMonitorDeviceID(LPCTSTR DisplayName, LPTSTR DeviceID)
 	return TRUE;
 }
 
-BOOL WINAPI GetMonitorNameFromDisplayName(LPCTSTR DisplayName, LPTSTR MonitorName)
+BOOL WINAPI GetMonitorNameFromDisplayName(LPCTSTR DisplayName, TCHAR MonitorName[128])
 {
 	// MonitorName should be a TCHAR[128]
 	BOOL status = FALSE;

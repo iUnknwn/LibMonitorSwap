@@ -42,7 +42,7 @@ namespace UnitTests
 		TEST_METHOD(TestGetAndReleaseDisplayNameArray)
 		{
 			BOOL status = FALSE;
-			LPTSTR* DisplayNames;
+			LPCTSTR* DisplayNames;
 			UINT DisplayCount;
 			
 			status = GetDisplayNameArray(&DisplayNames, &DisplayCount);
@@ -96,7 +96,7 @@ namespace UnitTests
 				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				// find the name of a display that is NOT the primary
-				LPTSTR* DisplayNameArray;
+				LPCTSTR* DisplayNameArray;
 				status = GetDisplayNameArray(&DisplayNameArray, &DisplayCount);
 				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
@@ -138,7 +138,7 @@ namespace UnitTests
 				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
 				// find the name of a display that is NOT the primary
-				LPTSTR* DisplayNameArray;
+				LPCTSTR* DisplayNameArray;
 				status = GetDisplayNameArray(&DisplayNameArray, &DisplayCount);
 				Assert::IsTrue(status == TRUE, GetLastMsgWrapper());
 
