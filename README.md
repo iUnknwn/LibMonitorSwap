@@ -39,7 +39,7 @@ please refer to the comments in each function, and the included unit
 test project for information on how to use library functions.
 
 ## License ##
-This code using a permissive ISC license - feel free to use whatever you
+This code is licensed under the ISC license - feel free to use whatever you
 find useful!
 
 
